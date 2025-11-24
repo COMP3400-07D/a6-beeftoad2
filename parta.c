@@ -7,17 +7,15 @@
  * Creates PCBs in heap memory with PID=index, burst_left from bursts array, wait=0.
  */
 struct pcb* init_procs(int* bursts, int blen) {
-    // Allocate memory for array of PCBs in the heap
     struct pcb* procs = malloc(blen * sizeof(struct pcb));
     if (procs == NULL) {
-        return NULL;  // malloc failed
+        return NULL;
     }
     
-    // Initialize each PCB
     for (int i = 0; i < blen; i++) {
-        procs[i].pid = i;              // PID is the index
-        procs[i].burst_left = bursts[i]; // Copy burst time
-        procs[i].wait = 0;             // Initial wait is 0
+        procs[i].pid = i;         
+        procs[i].burst_left = bursts[i]; 
+        procs[i].wait = 0;             
     }
     
     return procs;
@@ -42,10 +40,9 @@ void printall(struct pcb* procs, int plen) {
  * Processes that are already completed (burst_left = 0) don't get additional wait time.
  */
 void run_proc(struct pcb* procs, int plen, int current, int amount) {
-    // Reduce the current process's burst_left by amount
+    
     procs[current].burst_left -= amount;
     
-    // Increase wait time for all other processes that are not completed
     for (int i = 0; i < plen; i++) {
         if (i != current && procs[i].burst_left > 0) {
             procs[i].wait += amount;
@@ -61,14 +58,11 @@ void run_proc(struct pcb* procs, int plen, int current, int amount) {
 int fcfs_run(struct pcb* procs, int plen) {
     int current_time = 0;
     
-    // Run each process to completion in order
     for (int i = 0; i < plen; i++) {
         int burst_time = procs[i].burst_left;
         
-        // Run the process to completion
         run_proc(procs, plen, i, burst_time);
         
-        // Update current time
         current_time += burst_time;
     }
     
@@ -84,7 +78,6 @@ int fcfs_run(struct pcb* procs, int plen) {
  * If only the current process has work left, returns current.
  */
 int rr_next(int current, struct pcb* procs, int plen) {
-    // Check if all processes are complete
     bool all_done = true;
     for (int i = 0; i < plen; i++) {
         if (procs[i].burst_left > 0) {
@@ -96,7 +89,6 @@ int rr_next(int current, struct pcb* procs, int plen) {
         return -1;
     }
     
-    // Try to find the next available process starting from the next position
     for (int offset = 1; offset <= plen; offset++) {
         int next = (current + offset) % plen;
         if (procs[next].burst_left > 0) {
@@ -104,7 +96,6 @@ int rr_next(int current, struct pcb* procs, int plen) {
         }
     }
     
-    // This should not happen if we checked all_done correctly above
     return -1;
 }
 /**
@@ -114,27 +105,18 @@ int rr_next(int current, struct pcb* procs, int plen) {
  */
 int rr_run(struct pcb* procs, int plen, int quantum) {
     int current_time = 0;
-    int current_process = 0;  // Start with process 0
+    int current_process = 0; 
     
-    // Continue until all processes are done
     while (true) {
-        // Check if current process exists and has work to do
         if (current_process >= 0 && procs[current_process].burst_left > 0) {
-            // Determine how much time this process will run
             int run_time = (procs[current_process].burst_left < quantum) ? 
                           procs[current_process].burst_left : quantum;
-            
-            // Run the process
             run_proc(procs, plen, current_process, run_time);
-            
-            // Update total time
             current_time += run_time;
         }
         
-        // Find next process to run
         current_process = rr_next(current_process, procs, plen);
         
-        // If no next process, we're done
         if (current_process == -1) {
             break;
         }
